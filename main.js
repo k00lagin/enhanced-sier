@@ -118,31 +118,50 @@
 			z-index: 10;
 			display: flex;
 			flex-flow: column nowrap;
+			padding: 13px 0 0 13px;
 		`;
 		let header = document.createElement('header');
 		header.style = `
 			display: flex;
+			margin-bottom: 8px;
+			font-family:Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+			font-size:19px;
+			font-weight:500;
 		`;
-		let serviceSearchInput = document.createElement('input');
-		serviceSearchInput.classList.add('service-search-input', 'form-control');
-		serviceSearchInput.addEventListener('keyup', updateServiceList);
-		header.appendChild(serviceSearchInput);
+		let title = document.createElement('span');
+		title.textContent = 'Начало нового дела';
+		title.style = `
+			flex-grow: 1;
+		`;
+		header.appendChild(title);
 		let closeDialogTrigger = document.createElement('button');
 		closeDialogTrigger.addEventListener('click', closeServiceSearchDialog);
 		closeDialogTrigger.classList.add('icon-cross');
 		closeDialogTrigger.style = `
 			margin-left: 8px;
+			margin-right: 13px;
 			background-color: transparent;
 			border: 0;
 		`;
 		header.appendChild(closeDialogTrigger);
 		dialog.appendChild(header);
+		let serviceSearchInput = document.createElement('input');
+		serviceSearchInput.classList.add('service-search-input', 'form-control');
+		serviceSearchInput.addEventListener('keyup', updateServiceList);
+		serviceSearchInput.style = `
+			margin: 0 13px 8px 0;
+			width: calc(100% - 13px);
+		`;
+		serviceSearchInput.placeholder = 'Часть названия услуги, её код, или псевдоним...'
+		dialog.appendChild(serviceSearchInput);
 		let serviceListNode = document.createElement('ul');
 		serviceListNode.classList.add('service-list-node');
 		serviceListNode.style = `
 			overflow-y: scroll;
 			list-style: none;
 			padding: 0;
+			flex-grow: 1;
+			margin: 0;
 		`;
 		dialog.appendChild(serviceListNode);
 		document.body.appendChild(dialog);
