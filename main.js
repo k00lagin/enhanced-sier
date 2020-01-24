@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EhancedSIER
 // @namespace    k00lagin.enhanced-sier
-// @version      0.0.1
+// @version      0.0.2
 // @description
 // @author       Vsevolod Kulagin
 // @match        http://172.153.153.48/ais/*
@@ -31,19 +31,19 @@
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				"search":	{
+				"search": {
 					"search": [{
-						"field":"units.id",
-						"operator":"eq",
-						"value":"58bd51815744bf06e001b57b"
+						"field": "units.id",
+						"operator": "eq",
+						"value": "58bd51815744bf06e001b57b"
 					}]
 				},
-				"size":200,
-				"sort":"serviceCode,DESC",
-				"prj":"servicesList"
+				"size": 200,
+				"sort": "serviceCode,DESC",
+				"prj": "servicesList"
 			})
 		});
-		if (response.ok) { 
+		if (response.ok) {
 			let subservices = await response.json();
 			subservices = subservices.content
 			subservices.forEach(subservice => {
@@ -65,14 +65,14 @@
 		let filteredList = serviceList.filter(service => {
 			return words.every(word => {
 				if (service.sid.indexOf(word) !== -1) {
-					return(true);
+					return true;
 				}
 				if (service.name.indexOf(word) !== -1) {
-					return(true);
+					return true;
 				}
 			});
 		});
-		return(filteredList);
+		return filteredList;
 	}
 
 	function init() {
