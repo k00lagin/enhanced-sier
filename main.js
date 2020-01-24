@@ -2,7 +2,7 @@
 // @name         EhancedSIER
 // @namespace    k00lagin.enhanced-sier
 // @updateURL    https://raw.githubusercontent.com/k00lagin/enhanced-sier/master/main.js
-// @version      0.0.3
+// @version      0.0.4
 // @description
 // @author       Vsevolod Kulagin
 // @match        http://172.153.153.48/ais/*
@@ -116,6 +116,7 @@
 		clearInterval(initInterval);
 		ES.fixSearchTriggerInterval = setInterval(checkSearchTrigger, 500);
 		createServiceSearchDialog()
+		document.body.addEventListener('keyup', handleESKeyup);
 	}
 
 	function createServiceSearchDialog() {
@@ -218,6 +219,12 @@
 	function handleSearchKeyup(e) {
 		if (e.key === 'Enter' && document.querySelector('.service-search-dialog li:first-child > a')) {
 			document.querySelector('.service-search-dialog li:first-child > a').click();
+		}
+	}
+
+	function handleESKeyup(e) {
+		if (e.key === 'Escape' && document.querySelector('.service-search-dialog:not(.hidden)')) {
+			closeServiceSearchDialog();
 		}
 	}
 
