@@ -148,6 +148,7 @@
 		let serviceSearchInput = document.createElement('input');
 		serviceSearchInput.classList.add('service-search-input', 'form-control');
 		serviceSearchInput.addEventListener('keyup', updateServiceList);
+		serviceSearchInput.addEventListener('keyup', handleSearchKeyup);
 		serviceSearchInput.style = `
 			margin: 0 13px 8px 0;
 			width: calc(100% - 13px);
@@ -201,6 +202,12 @@
 	}
 	function closeServiceSearchDialog() {
 		document.querySelector('.service-search-dialog').classList.add('hidden');
+	}
+
+	function handleSearchKeyup(e) {
+		if (e.key === 'Enter' && document.querySelector('.service-search-dialog li:first-child > a')) {
+			document.querySelector('.service-search-dialog li:first-child > a').click();
+		}
 	}
 
 	let initInterval = setInterval(checkLoadState, 100);
