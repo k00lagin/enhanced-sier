@@ -12,6 +12,12 @@
 (function () {
 	'use strict';
 
+	let ES = {
+		aliases: {
+			719747: 'прописка',
+		}
+	};
+
 	function checkLoadState() {
 		if (!document.querySelector('.navigation.navigation-main')) {
 			return;
@@ -64,6 +70,9 @@
 		let words = string.split(' ');
 		let filteredList = serviceList.filter(service => {
 			return words.every(word => {
+				if (ES.aliases[service.sid] && ES.aliases[service.sid].indexOf(word) !== -1) {
+					return true;
+				}
 				if (service.sid.indexOf(word) !== -1) {
 					return true;
 				}
