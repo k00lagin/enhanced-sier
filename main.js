@@ -2,7 +2,7 @@
 // @name         EhancedSIER
 // @namespace    k00lagin.enhanced-sier
 // @updateURL    https://raw.githubusercontent.com/k00lagin/enhanced-sier/master/main.js
-// @version      0.0.2
+// @version      0.0.3
 // @description
 // @author       Vsevolod Kulagin
 // @match        http://172.153.153.48/ais/*
@@ -86,24 +86,35 @@
 		return filteredList;
 	}
 
-	function init() {
-		getServiceList();
-		let startAppealTrigger = document.createElement('button');
+	function plantServiceSearchTrigger() {
+		let serviceSearchTrigger = document.createElement('button');
 		let navigationContainer = document.querySelector('.navigation.navigation-main');
 		navigationContainer.style = `
 			display: flex;
 			flex-flow: column nowrap;
 		`;
-		startAppealTrigger.classList.add('icon-magic-wand');
-		startAppealTrigger.style = `
+		serviceSearchTrigger.classList.add('service-search-trigger','icon-magic-wand');
+		serviceSearchTrigger.style = `
 			order: -1;
 			height: 40px;
 			background-color: inherit;
 			border: 0;
 		`;
-		startAppealTrigger.addEventListener('click', openServiceSearchDialog);
-		navigationContainer.appendChild(startAppealTrigger);
+		serviceSearchTrigger.addEventListener('click', openServiceSearchDialog);
+		navigationContainer.appendChild(serviceSearchTrigger);
+	}
+
+	function checkSearchTrigger() {
+		if (!document.querySelector('.navigation.navigation-main .service-search-trigger')) {
+			plantServiceSearchTrigger();
+		}
+	}
+
+	function init() {
+		getServiceList();
+		plantServiceSearchTrigger();
 		clearInterval(initInterval);
+		ES.fixSearchTriggerInterval = setInterval(checkSearchTrigger, 500);
 		createServiceSearchDialog()
 	}
 
