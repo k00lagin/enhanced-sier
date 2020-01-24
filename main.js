@@ -107,8 +107,7 @@
 
 	function createServiceSearchDialog() {
 		let dialog = document.createElement('dialog');
-		dialog.id = 'service-search-dialog';
-		dialog.classList.add('hidden');
+		dialog.classList.add('service-search-dialog', 'hidden');
 		dialog.style = `
 			width: 600px;
 			height: calc(100% - 100px);
@@ -123,8 +122,7 @@
 			display: flex;
 		`;
 		let serviceSearchInput = document.createElement('input');
-		serviceSearchInput.classList.add('service-search-input');
-		serviceSearchInput.classList.add('form-control');
+		serviceSearchInput.classList.add('service-search-input', 'form-control');
 		serviceSearchInput.addEventListener('keyup', updateServiceList);
 		header.appendChild(serviceSearchInput);
 		let closeDialogTrigger = document.createElement('button');
@@ -177,11 +175,11 @@
 	function openServiceSearchDialog() {
 		document.querySelector('.service-search-input').value = '';
 		updateServiceList();
-		document.querySelector('#service-search-dialog').classList.remove('hidden');
+		document.querySelector('.service-search-dialog').classList.remove('hidden');
 		document.querySelector('.service-search-input').focus();
 	}
 	function closeServiceSearchDialog() {
-		document.querySelector('#service-search-dialog').classList.add('hidden');
+		document.querySelector('.service-search-dialog').classList.add('hidden');
 	}
 
 	let initInterval = setInterval(checkLoadState, 100);
