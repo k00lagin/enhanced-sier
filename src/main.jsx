@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         EhancedSIER
+// @name         Ehanced_SIER
 // @namespace    k00lagin.enhanced-sier
 // @updateURL    https://raw.githubusercontent.com/k00lagin/enhanced-sier/master/main.js
 // @version      0.0.4
-// @description
+// @description  Make SIER great again!
 // @author       Vsevolod Kulagin
 // @match        http://172.153.153.48/ais/*
 // @grant        none
