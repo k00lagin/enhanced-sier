@@ -8,7 +8,10 @@ var fs = require('fs');
 
 gulp.task('babel', function () {
 	return gulp.src('src/*.jsx').
-		pipe(preprocess({ context: JSON.parse(fs.readFileSync('./package.json'))})).
+		pipe(preprocess({ context: Object.assign({},
+			JSON.parse(fs.readFileSync('./package.json')),
+			{ style: fs.readFileSync('./src/style.css') })
+		})).
 		pipe(babel({
 			plugins: ['transform-react-jsx']
 		})).
