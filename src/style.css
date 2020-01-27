@@ -1,0 +1,64 @@
+.navigation.navigation-main {
+	display: flex;
+	flex-flow: column nowrap;
+}
+
+.service-search-trigger {
+	order: -1;
+	height: 40px;
+	background-color: inherit;
+	border: 0;
+}
+
+.service-search-dialog {
+	width: 600px;
+	height: calc(100% - 100px);
+	position: fixed;
+	top: 60px;
+	z-index: 10;
+	display: flex;
+	flex-flow: column nowrap;
+	padding: 13px 0 0 13px;
+	border: 1px solid rgba(125, 125, 125, 0.2);
+	box-shadow: 5px 0 5px -1px rgba(0,0,0,.2), 0 5px 5px -1px rgba(0,0,0,.2);
+}
+
+.dialog-header {
+	display: flex;
+	margin-bottom: 8px;
+	font-family:Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-size:19px;
+	font-weight:500;
+}
+
+.dialog-title {
+	flex-grow: 1;
+}
+
+.dialog__close-trigger {
+	margin-left: 8px;
+	margin-right: 13px;
+	background-color: transparent;
+	border: 0;
+}
+
+.service-search-input {
+	margin: 0 13px 8px 0;
+	width: calc(100% - 13px);
+}
+
+.service-list-node {
+	overflow-y: scroll;
+	list-style: none;
+	padding: 0;
+	flex-grow: 1;
+	margin: 0;
+}
+
+.service-code {
+	margin-right: 8px;
+}
+
+.service-link:focus {
+	text-decoration: underline;
+}
