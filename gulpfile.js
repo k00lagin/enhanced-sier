@@ -1,14 +1,18 @@
-"use strict";
+'use strict';
 
-var gulp = require("gulp");
+var gulp = require('gulp');
 var babel = require('gulp-babel');
+var preprocess = require('gulp-preprocess');
+var fs = require('fs');
 
-gulp.task("babel", function(){
-  return gulp.src("src/*.jsx").
-      pipe(babel({
-          plugins: ['transform-react-jsx']
-      })).
-      pipe(gulp.dest("dist/"));
+
+gulp.task('babel', function () {
+	return gulp.src('src/*.jsx').
+		pipe(preprocess({ context: JSON.parse(fs.readFileSync('./package.json'))})).
+		pipe(babel({
+			plugins: ['transform-react-jsx']
+		})).
+		pipe(gulp.dest('dist/'));
 });
 
-gulp.task("build", gulp.series("babel"));
+gulp.task('build', gulp.series('babel'));
