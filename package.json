@@ -1,6 +1,6 @@
 {
   "name": "enhanced-sier",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "private": true,
   "description": "Make SIER great again!",
   "main": "main.js",
