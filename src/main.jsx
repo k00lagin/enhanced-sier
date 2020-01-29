@@ -26,7 +26,7 @@
 			onKeyUp: 'keyup',
 			onClick: 'click'
 		},
-		createElement: function (tag, attrs, children) {
+		createElement: function (tag, attrs, ...children) {
 			var element = document.createElement(tag);
 
 			for (let name in attrs) {
@@ -35,7 +35,7 @@
 					if (name === 'className') {
 						element.className = value.toString();
 					}
-					else if (this.events.hasOwnProperty(name)) {
+					else if (this.events[name]) {
 						element.addEventListener(this.events[name], value);
 					}
 					else if (value === true) {
@@ -45,12 +45,11 @@
 					}
 				}
 			}
-			for (let i = 2; i < arguments.length; i++) {
-				let child = arguments[i];
+			children.forEach(child => {
 				element.appendChild(
 					child.nodeType == null ?
 						document.createTextNode(child.toString()) : child);
-			}
+			});
 			return element;
 		}
 	};
