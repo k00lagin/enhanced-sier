@@ -11,10 +11,12 @@
 }
 
 .service-search-dialog {
+	margin: 0;
 	width: 600px;
-	height: calc(100% - 100px);
-	position: fixed;
-	top: 60px;
+	height: 800px;
+	position: absolute;
+	left: 100px;
+	top: 32px;
 	z-index: 10;
 	display: flex;
 	flex-flow: column nowrap;
