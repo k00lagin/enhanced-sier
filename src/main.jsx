@@ -5,7 +5,7 @@
 // @version      /* @echo version */
 // @description  /* @echo description */
 // @author       /* @echo author */
-// @match        http://172.153.153.48/ais/*
+// @match        http://172.153.153.48/*
 // @grant        GM_addStyle
 // ==/UserScript==
 
