@@ -123,7 +123,7 @@
 	function plantServiceSearchTrigger() {
 		let serviceSearchTrigger = (
 			<button className="service-search-trigger icon-magic-wand"
-			onClick={openServiceSearchDialog}></button>
+			onClick={handleSearchTriggerClick}></button>
 		)
 		let navigationContainer = document.querySelector('.navigation.navigation-main');
 		navigationContainer.appendChild(serviceSearchTrigger);
@@ -182,6 +182,15 @@
 			);
 			serviceListNode.appendChild(listItem);
 		})
+	}
+
+	function handleSearchTriggerClick() {
+		if (document.querySelector('.service-search-dialog.hidden')) {
+			openServiceSearchDialog();
+		}
+		else {
+			closeServiceSearchDialog();
+		}
 	}
 
 	function openServiceSearchDialog() {

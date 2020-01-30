@@ -10,6 +10,10 @@
 	border: 0;
 }
 
+.service-search-trigger:hover {
+	background-color: rgba(0,0,0,.1);
+}
+
 .service-search-dialog {
 	margin: 0;
 	width: 600px;
