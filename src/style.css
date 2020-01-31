@@ -1,3 +1,9 @@
+body {
+	--es-05gap: calc(var(--es-gap) / 2);
+	--es-gap: 8px;
+	--es-2gap: calc(var(--es-gap) * 2);
+}
+
 .navigation.navigation-main {
 	display: flex;
 	flex-flow: column nowrap;
@@ -24,14 +30,15 @@
 	z-index: 10;
 	display: flex;
 	flex-flow: column nowrap;
-	padding: 13px 0 0 13px;
+	padding: 0;
+	padding-top: var(--es-2gap);
 	border: 1px solid rgba(125, 125, 125, 0.2);
 	box-shadow: 5px 0 5px -1px rgba(0,0,0,.2), 0 5px 5px -1px rgba(0,0,0,.2);
 }
 
 .dialog-header {
 	display: flex;
-	margin-bottom: 8px;
+	margin-bottom: var(--es-gap);
 	font-family:Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif;
 	font-size:19px;
 	font-weight:500;
@@ -39,18 +46,19 @@
 
 .dialog-title {
 	flex-grow: 1;
+	margin-left: var(--es-2gap);
 }
 
 .dialog__close-trigger {
-	margin-left: 8px;
-	margin-right: 13px;
+	margin-left: var(--es-gap);
+	margin-right: var(--es-2gap);
 	background-color: transparent;
 	border: 0;
 }
 
 .service-search-input {
-	margin: 0 13px 8px 0;
-	width: calc(100% - 13px);
+	margin: 0 var(--es-2gap) var(--es-gap) var(--es-2gap);
+	width: calc(100% - calc(var(--es-2gap) * 2));
 }
 
 .service-list-node {
@@ -61,10 +69,19 @@
 	margin: 0;
 }
 
+.service-item {
+	padding: var(--es-05gap) 0 var(--es-05gap) var(--es-2gap);
+}
+
+.service-item:focus-within {
+	background-color: dodgerblue;
+	color: #fff;
+}
+
 .service-code {
 	margin-right: 8px;
 }
 
 .service-link:focus {
-	text-decoration: underline;
+	color: #fdfdfd;
 }

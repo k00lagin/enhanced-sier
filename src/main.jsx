@@ -172,7 +172,7 @@
 		serviceListNode.innerHTML = '';
 		filteredList.forEach(service => {
 			let listItem = (
-				<li>
+				<li className="service-item">
 					<span className="service-code">{service.sid} </span>
 					<a className="service-link" tabindex="0"
 					href={ 'http://172.153.153.48/ais/appeals/create/' + service.id }>
