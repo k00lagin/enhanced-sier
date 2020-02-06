@@ -122,8 +122,8 @@
 
 	function plantServiceSearchTrigger() {
 		let serviceSearchTrigger = (
-			<button className="service-search-trigger icon-magic-wand"
-			onClick={handleSearchTriggerClick}></button>
+			<button className='service-search-trigger icon-magic-wand'
+				onClick={handleSearchTriggerClick}></button>
 		)
 		let navigationContainer = document.querySelector('.navigation.navigation-main');
 		navigationContainer.appendChild(serviceSearchTrigger);
@@ -140,6 +140,7 @@
 		plantServiceSearchTrigger();
 		clearInterval(initInterval);
 		ES.fixSearchTriggerInterval = setInterval(checkSearchTrigger, 500);
+		ES.checkPersonsSearchInterval = setInterval(checkPersonsList, 1000);
 		createServiceSearchDialog()
 		document.body.addEventListener('keyup', handleESKeyup);
 		GM_addStyle(`/* @echo style */`);
@@ -147,14 +148,14 @@
 
 	function createServiceSearchDialog() {
 		let dialog = (
-			<dialog className="service-search-dialog hidden">
-				<header className="dialog-header">
-					<span className="dialog-title">Начало нового дела</span>
-					<button className="dialog__close-trigger icon-cross" onClick={closeServiceSearchDialog}></button>
+			<dialog className='service-search-dialog hidden'>
+				<header className='dialog-header'>
+					<span className='dialog-title'>Начало нового дела</span>
+					<button className='dialog__close-trigger icon-cross' onClick={closeServiceSearchDialog}></button>
 				</header>
-				<input className="service-search-input form-control" type="text"
-				onKeyUp={handleSearchKeyup} placeholder="Часть названия услуги, её код, или псевдоним..."></input>
-				<ul className="service-list-node"></ul>
+				<input className='service-search-input form-control' type='text'
+					onKeyUp={handleSearchKeyup} placeholder='Часть названия услуги, её код, или псевдоним...'></input>
+				<ul className='service-list-node'></ul>
 			</dialog>
 		)
 		document.body.appendChild(dialog);
@@ -172,10 +173,10 @@
 		serviceListNode.innerHTML = '';
 		filteredList.forEach(service => {
 			let listItem = (
-				<li className="service-item">
-					<span className="service-code">{service.sid} </span>
-					<a className="service-link" tabindex="0"
-					href={ 'http://172.153.153.48/ais/appeals/create/' + service.id }>
+				<li className='service-item'>
+					<span className='service-code'>{service.sid} </span>
+					<a className='service-link' tabindex='0'
+						href={'http://172.153.153.48/ais/appeals/create/' + service.id}>
 						{service.name}
 					</a>
 				</li>
@@ -215,6 +216,75 @@
 	function handleESKeyup(e) {
 		if (e.key === 'Escape' && document.querySelector('.service-search-dialog:not(.hidden)')) {
 			closeServiceSearchDialog();
+		}
+	}
+
+	function checkPersonsList() {
+		if (document.querySelector('input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]') && !document.querySelector('.__es__persons-list')) {
+			preparePersonsList();
+		}
+	}
+
+	function preparePersonsList() {
+		let search = document.querySelector('input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]');
+		if (search) {
+			search.addEventListener('input', handlePersonSearch);
+			let personsList = (
+				<ul className='__es__persons-list'></ul>
+			)
+			console.log(personsList);
+			search.parentNode.appendChild(personsList)
+		}
+	}
+
+	async function handlePersonSearch() {
+		let search = document.querySelector('input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]');
+		let personsList = document.querySelector('.__es__persons-list');
+		if (search && personsList && search.value && search.value.match(/^([А-яёЁ])+\s([А-яёЁ])*/g)) {
+			let lastName = search.value.split(' ')[0];
+			let persons = {};
+			let response = await fetch('http://172.153.153.48/api/v1/search/persons', {
+				method: 'POST',
+				headers: {
+					Authorization: 'Bearer ' + localStorage.accessToken,
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					'search': {
+						'search': [{
+							'field': 'data.person.lastName',
+							'operator': 'eq',
+							'value': lastName
+						}]
+					}
+				})
+			});
+			if (response.ok) {
+				persons = await response.json();
+				console.log(persons);
+				updatePersonsList(persons.content);
+			} else {
+				console.warn('Ошибка HTTP: ' + response.status);
+			}
+		}
+	}
+
+	function updatePersonsList(persons) {
+		let personsList = document.querySelector('.__es__persons-list');
+		if (persons && personsList) {
+			personsList.innerHTML = '';
+			persons.forEach(person => {
+				let personElement = (
+					<li className='__es__persons-list__person-element __es__person'>
+						<button type='button' className='__es__person__trigger'>
+							<span className='__es__person__name'>{ `${person.data.person.lastName} ${person.data.person.firstName} ${person.data.person.middleName}` }</span>,
+							<span>{ ` ${person.data.person.birthday.formatted}` }</span>
+							<div>{ `${person.data.person.documentType[0].text} ${person.data.person.documentSeries} ${person.data.person.documentNumber}` }</div>
+						</button>
+					</li>
+				);
+				personsList.appendChild(personElement);
+			})
 		}
 	}
 

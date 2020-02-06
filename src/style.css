@@ -75,7 +75,7 @@ body {
 
 .service-item:focus-within {
 	background-color: dodgerblue;
-	color: #fff;
+	color: white;
 }
 
 .service-code {
@@ -84,4 +84,46 @@ body {
 
 .service-link:focus {
 	color: #fdfdfd;
+}
+
+.__es__persons-list {
+	display: none;
+	position: absolute;
+	top: 36px;
+	left: 0;
+	width: 100%;
+	background-color:	white;
+	z-index: 10;
+	list-style: none;
+	padding: 0;
+	max-height: 1000px;
+	overflow-y: scroll;
+	box-shadow: 5px 0 5px -1px rgba(0,0,0,.2), 0 5px 5px -1px rgba(0,0,0,.2);
+	flex-flow: column nowrap;
+}
+
+input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]:focus ~ .__es__persons-list:not(:empty),
+.__es__persons-list:focus-within,
+.__es__persons-list:hover:not(:empty) {
+	display: flex;
+}
+
+.__es__person__trigger {
+	background-color: transparent;
+	border: 0;
+	width: 100%;
+	text-align: left;
+	padding: 8px 13px;
+}
+
+.__es__person__trigger:hover {
+	background-color: hsla(197, 71%, 73%, 0.231);
+}
+
+.__es__person__trigger:focus {
+	background-color: hsla(197, 50%, 73%, 0.3);
+}
+
+.__es__person__name {
+	font-weight: bold;
 }
