@@ -283,7 +283,7 @@
 				let personElement = (
 					<li key={person._id} className='__es__persons-list__person-element __es__person'>
 						<button type='button' className='__es__person__trigger' onClick={handlePersonClick}>
-							<span className='__es__person__name'>{ `${person.data.person.lastName} ${person.data.person.firstName} ${person.data.person.middleName}` }</span>,
+							<span className='__es__person__name'>{ `${person.data.person.lastName} ${person.data.person.firstName}${person.data.person.middleName ? ' ' + person.data.person.middleName : ''}` }</span>,
 							<span>{ ` ${person.data.person.birthday ? person.data.person.birthday.formatted : ''}` }</span>
 							<div>{ person.data.person.documentType ? `${person.data.person.documentType[0].text} ${person.data.person.documentSeries} ${person.data.person.documentNumber}` : '' }</div>
 						</button>
@@ -317,7 +317,7 @@
 		let snilsInput = document.querySelector('input[name=snils]')
 		let mobileInput = document.querySelector('input[name=mobile]')
 
-		fioInput.value = `${person.data.person.lastName} ${person.data.person.firstName} ${person.data.person.middleName}`;
+		fioInput.value = `${person.data.person.lastName} ${person.data.person.firstName}${person.data.person.middleName ? ' ' + person.data.person.middleName : ''}`;
 		birthdayInput.value = `${person.data.person.birthday.formatted}`;
 		birthdayVisualInput.value = `${person.data.person.birthday.formatted}`;
 
