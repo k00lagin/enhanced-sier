@@ -18,7 +18,8 @@
 			719747: 'прописка',
 			723392: 'права',
 			727489: 'снилс',
-		}
+		},
+		persons: []
 	};
 
 	const React = {
@@ -242,7 +243,6 @@
 		let personsList = document.querySelector('.__es__persons-list');
 		if (search && personsList && search.value && search.value.match(/^([А-яёЁ])+\s([А-яёЁ])*/g)) {
 			let lastName = search.value.split(' ')[0];
-			let persons = {};
 			let response = await fetch('http://172.153.153.48/api/v1/search/persons', {
 				method: 'POST',
 				headers: {
@@ -254,18 +254,24 @@
 						'search': [{
 							'field': 'data.person.lastName',
 							'operator': 'eq',
-							'value': lastName
+							'value': lastName[0].toUpperCase() + lastName.substr(1)
 						}]
-					}
+					},
+					'sort': 'dateLastModification,DESC',
 				})
 			});
 			if (response.ok) {
-				persons = await response.json();
-				console.log(persons);
-				updatePersonsList(persons.content);
+				ES.persons = await response.json();
+				ES.persons = ES.persons.content;
+				console.log(ES.persons);
+				updatePersonsList(ES.persons);
 			} else {
 				console.warn('Ошибка HTTP: ' + response.status);
 			}
+		}
+		else if (ES.persons) {
+			ES.persons = [];
+			updatePersonsList(ES.persons);
 		}
 	}
 
@@ -275,17 +281,61 @@
 			personsList.innerHTML = '';
 			persons.forEach(person => {
 				let personElement = (
-					<li className='__es__persons-list__person-element __es__person'>
-						<button type='button' className='__es__person__trigger'>
+					<li key={person._id} className='__es__persons-list__person-element __es__person'>
+						<button type='button' className='__es__person__trigger' onClick={handlePersonClick}>
 							<span className='__es__person__name'>{ `${person.data.person.lastName} ${person.data.person.firstName} ${person.data.person.middleName}` }</span>,
-							<span>{ ` ${person.data.person.birthday.formatted}` }</span>
-							<div>{ `${person.data.person.documentType[0].text} ${person.data.person.documentSeries} ${person.data.person.documentNumber}` }</div>
+							<span>{ ` ${person.data.person.birthday ? person.data.person.birthday.formatted : ''}` }</span>
+							<div>{ person.data.person.documentType ? `${person.data.person.documentType[0].text} ${person.data.person.documentSeries} ${person.data.person.documentNumber}` : '' }</div>
 						</button>
 					</li>
 				);
 				personsList.appendChild(personElement);
 			})
 		}
+	}
+
+	function handlePersonClick(e) {
+		let person = ES.persons.filter(person => person._id === e.currentTarget.parentNode.getAttribute('key'))[0];
+		fillPersonData(person);
+	}
+
+	function fillPersonData(person) {
+		let fioInput = document.querySelector('input[name=fio]')
+		let birthdayInput = document.querySelector('date-picker[name=birthday] input[name=mydate]')
+		let birthdayVisualInput = document.querySelector('date-picker[name=birthday] input[name=mydate] + input')
+
+		//let documentTypeInput = document.querySelector('individual-object-document input[name=mydate]')
+		let documentSeriesInput = document.querySelector('individual-object-document input[name=documentSeries]');
+		let documentNumberInput = document.querySelector('individual-object-document input[name=documentNumber]');
+		let documentIssueDateInput = document.querySelector('individual-object-document date-picker[name=documentIssueDate] input[name=mydate]');
+		let documentIssueDateVisualInput = document.querySelector('individual-object-document date-picker[name=documentIssueDate] input[name=mydate] + input');
+		let documentIssuerInput = document.querySelector('individual-object-document catalogue[name=documentIssuer] input[type=text]');
+		let documentIssuerCodeInput = document.querySelector('individual-object-document input[name=documentIssuerCode]');
+		let documentIssuerNameInput = document.querySelector('individual-object-document  input[name=documentIssuerName]');
+		let birthPlaceUnrecognizablePartInput = document.querySelectorAll('individual-object-document fias input[type=text]')[1];
+
+		let snilsInput = document.querySelector('input[name=snils]')
+		let mobileInput = document.querySelector('input[name=mobile]')
+
+		fioInput.value = `${person.data.person.lastName} ${person.data.person.firstName} ${person.data.person.middleName}`;
+		birthdayInput.value = `${person.data.person.birthday.formatted}`;
+		birthdayVisualInput.value = `${person.data.person.birthday.formatted}`;
+
+		documentSeriesInput.value = person.data.person.documentSeries;
+		documentNumberInput.value = person.data.person.documentNumber;
+		documentIssueDateInput.value = person.data.person.documentIssueDate.formatted;
+		documentIssueDateVisualInput.value = person.data.person.documentIssueDate.formatted;
+		if (documentIssuerInput) {
+			documentIssuerInput.value = person.data.person.documentIssuer.name;
+		}
+		if (documentIssuerCodeInput) {
+			documentIssuerCodeInput.value = person.data.person.documentIssuer.code
+			documentIssuerNameInput.value = person.data.person.documentIssuer.name;
+		}
+		birthPlaceUnrecognizablePartInput.value = person.data.person.birthPlace.unrecognizablePart;
+
+		snilsInput.value = person.data.person.snils ? person.data.person.snils : '';
+		mobileInput.value = person.data.person.mobile;
 	}
 
 	let initInterval = setInterval(checkLoadState, 100);
