@@ -296,46 +296,42 @@
 
 	function handlePersonClick(e) {
 		let person = ES.persons.filter(person => person._id === e.currentTarget.parentNode.getAttribute('key'))[0];
-		fillPersonData(person);
+		fillPersonData(person.data.person);
 	}
 
 	function fillPersonData(person) {
 		let fioInput = document.querySelector('input[name=fio]')
-		let birthdayInput = document.querySelector('date-picker[name=birthday] input[name=mydate]')
-		let birthdayVisualInput = document.querySelector('date-picker[name=birthday] input[name=mydate] + input')
 
-		//let documentTypeInput = document.querySelector('individual-object-document input[name=mydate]')
-		let documentSeriesInput = document.querySelector('individual-object-document input[name=documentSeries]');
-		let documentNumberInput = document.querySelector('individual-object-document input[name=documentNumber]');
-		let documentIssueDateInput = document.querySelector('individual-object-document date-picker[name=documentIssueDate] input[name=mydate]');
-		let documentIssueDateVisualInput = document.querySelector('individual-object-document date-picker[name=documentIssueDate] input[name=mydate] + input');
-		let documentIssuerInput = document.querySelector('individual-object-document catalogue[name=documentIssuer] input[type=text]');
-		let documentIssuerCodeInput = document.querySelector('individual-object-document input[name=documentIssuerCode]');
-		let documentIssuerNameInput = document.querySelector('individual-object-document  input[name=documentIssuerName]');
-		let birthPlaceUnrecognizablePartInput = document.querySelectorAll('individual-object-document fias input[type=text]')[1];
+		fioInput.value = `${person.lastName} ${person.firstName}${person.middleName ? ' ' + person.middleName : ''}`;
+		optionalRenderValue(person.birthday.formatted, 'date-picker[name=birthday] input[name=mydate]');
+		optionalRenderValue(person.birthday.formatted, 'date-picker[name=birthday] input[name=mydate] + input');
 
-		let snilsInput = document.querySelector('input[name=snils]')
-		let mobileInput = document.querySelector('input[name=mobile]')
+		optionalRenderValue(person.citizenship.name, 'individual-object-document catalogue[name=citizenship] input')
+		optionalRenderValue(person.documentSeries, 'individual-object-document input[name=documentSeries]');
+		optionalRenderValue(person.documentNumber, 'individual-object-document input[name=documentNumber]');
+		optionalRenderValue(person.documentIssueDate.formatted, 'individual-object-document date-picker[name=documentIssueDate] input[name=mydate]');
+		optionalRenderValue(person.documentIssueDate.formatted, 'individual-object-document date-picker[name=documentIssueDate] input[name=mydate] + input');
 
-		fioInput.value = `${person.data.person.lastName} ${person.data.person.firstName}${person.data.person.middleName ? ' ' + person.data.person.middleName : ''}`;
-		birthdayInput.value = `${person.data.person.birthday.formatted}`;
-		birthdayVisualInput.value = `${person.data.person.birthday.formatted}`;
-
-		documentSeriesInput.value = person.data.person.documentSeries;
-		documentNumberInput.value = person.data.person.documentNumber;
-		documentIssueDateInput.value = person.data.person.documentIssueDate.formatted;
-		documentIssueDateVisualInput.value = person.data.person.documentIssueDate.formatted;
-		if (documentIssuerInput) {
-			documentIssuerInput.value = person.data.person.documentIssuer.name;
+		if (!optionalRenderValue(person.documentIssuer.name, 'individual-object-document catalogue[name=documentIssuer] input[type=text]')) {
+			optionalRenderValue(person.documentIssuer.code, 'individual-object-document input[name=documentIssuerCode]');
+			optionalRenderValue(person.documentIssuer.name, 'individual-object-document  input[name=documentIssuerName]');
 		}
-		if (documentIssuerCodeInput) {
-			documentIssuerCodeInput.value = person.data.person.documentIssuer.code
-			documentIssuerNameInput.value = person.data.person.documentIssuer.name;
-		}
-		birthPlaceUnrecognizablePartInput.value = person.data.person.birthPlace.unrecognizablePart;
 
-		snilsInput.value = person.data.person.snils ? person.data.person.snils : '';
-		mobileInput.value = person.data.person.mobile;
+		optionalRenderValue(person.birthPlace.unrecognizablePart, 'individual-object-document fias input[type=text]:not([placeholder])')
+
+		optionalRenderValue(person.snils, 'input[name=snils]');
+		optionalRenderValue(person.mobile, 'input[name=mobile]')
+	}
+
+	function optionalRenderValue(value, targetQuery) {
+		if (value) {
+			let targetElement = document.querySelector(targetQuery);
+			if (targetElement) {
+				targetElement.value = value;
+				return true;
+			}
+		}
+		return false;
 	}
 
 	let initInterval = setInterval(checkLoadState, 100);
