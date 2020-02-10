@@ -19,7 +19,8 @@
 			723392: 'права',
 			727489: 'снилс',
 		},
-		persons: []
+		persons: [],
+		lastPersonSearchString: ''
 	};
 
 	const React = {
@@ -230,6 +231,7 @@
 		let search = document.querySelector('input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]');
 		if (search) {
 			search.addEventListener('input', handlePersonSearch);
+			search.addEventListener('focus', handleSearchFocus);
 			let personsList = (
 				<ul className='__es__persons-list'></ul>
 			)
@@ -241,37 +243,75 @@
 	async function handlePersonSearch() {
 		let search = document.querySelector('input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]');
 		let personsList = document.querySelector('.__es__persons-list');
-		if (search && personsList && search.value && search.value.match(/^([А-яёЁ])+\s([А-яёЁ])*/g)) {
-			let lastName = search.value.split(' ')[0];
-			let response = await fetch('http://172.153.153.48/api/v1/search/persons', {
-				method: 'POST',
-				headers: {
-					Authorization: 'Bearer ' + localStorage.accessToken,
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					'search': {
-						'search': [{
-							'field': 'data.person.lastName',
+		if (search.value === '') {
+			ES.lastPersonSearchString = '';
+		}
+		if (search && personsList && search.value) {
+			let searchComponents = search.value.split(' ');
+			var searchParams = [];
+			var searchString = '';
+			if (searchComponents.length > 1) {
+				let lastName = searchComponents[0];
+				searchParams.push({
+					'field': 'data.person.lastName',
+					'operator': 'eq',
+					'value': lastName[0].toUpperCase() + lastName.substr(1)
+				});
+				searchString += lastName[0].toUpperCase() + lastName.substr(1);
+				if (searchComponents.length > 2) {
+					var firstName = searchComponents[1];
+					searchParams.push({
+						'field': 'data.person.firstName',
+						'operator': 'eq',
+						'value': firstName[0].toUpperCase() + firstName.substr(1)
+					});
+					searchString += firstName[0].toUpperCase() + firstName.substr(1);
+					if (searchComponents.length > 3) {
+						var middleName = searchComponents[2];
+						searchParams.push({
+							'field': 'data.person.middleName',
 							'operator': 'eq',
-							'value': lastName[0].toUpperCase() + lastName.substr(1)
-						}]
+							'value': middleName[0].toUpperCase() + middleName.substr(1)
+						});
+						searchString += middleName[0].toUpperCase() + middleName.substr(1);
+					}
+				}
+			}
+			if (searchParams.length > 0 && ES.lastPersonSearchString !== searchString) {
+				ES.lastPersonSearchString = searchString;
+				let response = await fetch('http://172.153.153.48/api/v1/search/persons', {
+					method: 'POST',
+					headers: {
+						Authorization: 'Bearer ' + localStorage.accessToken,
+						'Content-Type': 'application/json'
 					},
-					'sort': 'dateLastModification,DESC',
-				})
-			});
-			if (response.ok) {
-				ES.persons = await response.json();
-				ES.persons = ES.persons.content;
-				console.log(ES.persons);
-				updatePersonsList(ES.persons);
-			} else {
-				console.warn('Ошибка HTTP: ' + response.status);
+					body: JSON.stringify({
+						'search': {
+							'search': searchParams
+						},
+						'sort': 'dateLastModification,DESC',
+					})
+				});
+				if (response.ok) {
+					ES.persons = await response.json();
+					ES.persons = ES.persons.content;
+					console.log(ES.persons);
+					updatePersonsList(ES.persons);
+				} else {
+					console.warn('Ошибка HTTP: ' + response.status);
+				}
 			}
 		}
 		else if (ES.persons) {
 			ES.persons = [];
 			updatePersonsList(ES.persons);
+		}
+	}
+
+	function handleSearchFocus() {
+		let search = document.querySelector('input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]');
+		if (search.value === '') {
+			ES.lastPersonSearchString = '';
 		}
 	}
 
