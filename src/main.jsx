@@ -20,6 +20,7 @@
 			727489: 'снилс',
 		},
 		persons: [],
+		recentClients: [],
 		lastPersonSearchString: ''
 	};
 
@@ -222,29 +223,36 @@
 	}
 
 	function checkPersonsList() {
-		if (document.querySelector('input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]') && !document.querySelector('.__es__persons-list')) {
+		if (document.querySelector('input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]') && !document.querySelector('.__es__search-flyout')) {
 			preparePersonsList();
 		}
 	}
 
 	function preparePersonsList() {
 		let search = document.querySelector('input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]');
+		fetchRecentAppeals()
 		if (search) {
 			search.addEventListener('input', handlePersonSearch);
 			search.addEventListener('focus', handleSearchFocus);
-			let personsList = (
-				<ul className='__es__persons-list'></ul>
-			)
-			console.log(personsList);
-			search.parentNode.appendChild(personsList)
+			search.parentNode.appendChild(
+				<div className='__es__search-flyout'>
+					<ul className='__es__recent-clients-list'></ul>
+					<ul className='__es__persons-list'></ul>
+				</div>
+			);
 		}
 	}
 
 	async function handlePersonSearch() {
 		let search = document.querySelector('input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]');
 		let personsList = document.querySelector('.__es__persons-list');
+		let recentClientList = document.querySelector('.__es__recent-clients-list');
 		if (search.value === '') {
 			ES.lastPersonSearchString = '';
+		}
+		if (search && recentClientList && search.value && ES.recentClients.length > 0) {
+			let filteredClients = ES.recentClients.filter(client => client.lastName.toLowerCase().indexOf(search.value.toLowerCase()) !== -1);
+			updatePersonsList(filteredClients, recentClientList);
 		}
 		if (search && personsList && search.value) {
 			let searchComponents = search.value.split(' ');
@@ -295,8 +303,7 @@
 				if (response.ok) {
 					ES.persons = await response.json();
 					ES.persons = ES.persons.content;
-					console.log(ES.persons);
-					updatePersonsList(ES.persons);
+					updatePersonsList(ES.persons, document.querySelector('.__es__persons-list'));
 				} else {
 					console.warn('Ошибка HTTP: ' + response.status);
 				}
@@ -304,7 +311,8 @@
 		}
 		else if (ES.persons) {
 			ES.persons = [];
-			updatePersonsList(ES.persons);
+			updatePersonsList(ES.persons, document.querySelector('.__es__persons-list'));
+			updatePersonsList([], document.querySelector('.__es__recent-clients-list'));
 		}
 	}
 
@@ -315,28 +323,34 @@
 		}
 	}
 
-	function updatePersonsList(persons) {
-		let personsList = document.querySelector('.__es__persons-list');
-		if (persons && personsList) {
-			personsList.innerHTML = '';
+	function updatePersonsList(persons, listNode) {
+		if (persons && listNode) {
+			listNode.innerHTML = '';
 			persons.forEach(person => {
+				let id = person._id || person.reestrId;
+				if (person.data) {
+					person = person.data.person;
+				}
 				let personElement = (
-					<li key={person._id} className='__es__persons-list__person-element __es__person'>
+					<li key={id} className='__es__persons-list__person-element __es__person'>
 						<button type='button' className='__es__person__trigger' onClick={handlePersonClick}>
-							<span className='__es__person__name'>{ `${person.data.person.lastName} ${person.data.person.firstName}${person.data.person.middleName ? ' ' + person.data.person.middleName : ''}` }</span>,
-							<span>{ ` ${person.data.person.birthday ? person.data.person.birthday.formatted : ''}` }</span>
-							<div>{ person.data.person.documentType ? `${person.data.person.documentType[0].text} ${person.data.person.documentSeries} ${person.data.person.documentNumber}` : '' }</div>
+							<span className='__es__person__name'>{ `${person.lastName} ${person.firstName}${person.middleName ? ' ' + person.middleName : ''}` }</span>,
+							<span>{ ` ${person.birthday ? person.birthday.formatted : ''}` }</span>
+							<div>{ person.documentType ? `${person.documentType[0].text} ${person.documentSeries} ${person.documentNumber}` : '' }</div>
 						</button>
 					</li>
 				);
-				personsList.appendChild(personElement);
+				listNode.appendChild(personElement);
 			})
 		}
 	}
 
 	function handlePersonClick(e) {
-		let person = ES.persons.filter(person => person._id === e.currentTarget.parentNode.getAttribute('key'))[0];
-		fillPersonData(person.data.person);
+		let person = ES.recentClients.filter(person => person.reestrId === e.currentTarget.parentNode.getAttribute('key'))[0];
+		if (!person) {
+			person = ES.persons.filter(person => person._id === e.currentTarget.parentNode.getAttribute('key'))[0].data.person;
+		}
+		fillPersonData(person);
 	}
 
 	function fillPersonData(person) {
@@ -372,6 +386,43 @@
 			}
 		}
 		return false;
+	}
+
+	async function fetchRecentAppeals() {
+		let response = await fetch('http://172.153.153.48/api/v1/search/appeals', {
+			method: 'POST',
+			headers: {
+				Authorization: 'Bearer ' + localStorage.accessToken,
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				"search": {
+					"search": [{
+						"field": "unit.id",
+						"operator": "eq",
+						"value": JSON.parse(localStorage.currentOrganization)._id
+					},
+					{
+						"field": "userCreation.login",
+						"operator": "eq",
+						"value": JSON.parse(localStorage.user).login
+					}]
+				},
+				"sort": "dateLastModification,DESC"
+			})
+		});
+		if (response.ok) {
+			let appeals = await response.json();
+			appeals.content.forEach(appeal => {
+				appeal.objects.forEach(object => {
+					if (object.data && object.data.person && !ES.recentClients.some(client => client.reestrId === object.data.person.reestrId)) {
+						ES.recentClients.push(object.data.person);
+					}
+				});
+			});
+		} else {
+			console.warn("Ошибка HTTP: " + response.status);
+		}
 	}
 
 	let initInterval = setInterval(checkLoadState, 100);

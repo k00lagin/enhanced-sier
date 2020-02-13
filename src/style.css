@@ -86,7 +86,11 @@ body {
 	color: #fdfdfd;
 }
 
-.__es__persons-list {
+.__es__recent-clients-list:empty {
+	display: none;
+}
+
+.__es__search-flyout {
 	display: none;
 	position: absolute;
 	top: 36px;
@@ -94,17 +98,33 @@ body {
 	width: 100%;
 	background-color:	white;
 	z-index: 10;
-	list-style: none;
-	padding: 0;
 	max-height: 1000px;
 	overflow-y: scroll;
 	box-shadow: 5px 0 5px -1px rgba(0,0,0,.2), 0 5px 5px -1px rgba(0,0,0,.2);
 	flex-flow: column nowrap;
 }
 
-input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]:focus ~ .__es__persons-list:not(:empty),
-.__es__persons-list:focus-within,
-.__es__persons-list:hover:not(:empty) {
+.__es__recent-clients-list,
+.__es__persons-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	flex-flow: column nowrap;
+}
+
+.__es__recent-clients-list::before {
+	content: 'Недавние заявители';
+	display: block;
+	margin-left: var(--es-2gap);
+	margin-top: var(--es-gap);
+	font-weight: bolder;
+	text-transform: uppercase;
+}
+
+input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]:focus ~ .__es__search-flyout,
+.__es__search-flyout:focus-within,
+.__es__search-flyout:hover {
 	display: flex;
 }
 
@@ -113,7 +133,7 @@ input[placeholder="Поиск по ФИО, СНИЛС или номеру моб
 	border: 0;
 	width: 100%;
 	text-align: left;
-	padding: 8px 13px;
+	padding: var(--es-gap) var(--es-2gap);
 }
 
 .__es__person__trigger:hover {
