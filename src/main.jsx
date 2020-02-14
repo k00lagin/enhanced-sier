@@ -355,8 +355,8 @@
 
 	function fillPersonData(person) {
 		let fioInput = document.querySelector('input[name=fio]')
-
 		fioInput.value = `${person.lastName} ${person.firstName}${person.middleName ? ' ' + person.middleName : ''}`;
+		fioInput.dispatchEvent(new Event('input'));
 		optionalRenderValue(person.birthday.formatted, 'date-picker[name=birthday] input[name=mydate]');
 		optionalRenderValue(person.birthday.formatted, 'date-picker[name=birthday] input[name=mydate] + input');
 
@@ -382,6 +382,7 @@
 			let targetElement = document.querySelector(targetQuery);
 			if (targetElement) {
 				targetElement.value = value;
+				targetElement.dispatchEvent(new Event('input'));
 				return true;
 			}
 		}
