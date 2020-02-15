@@ -19,6 +19,7 @@
 			723392: 'права',
 			727489: 'снилс',
 		},
+		serviceList: [],
 		persons: [],
 		recentClients: [],
 		lastPersonSearchString: ''
@@ -67,14 +68,8 @@
 	}
 
 	async function getServiceList() {
-		window.serviceList = [];
-		let response = await fetch('http://172.153.153.48/api/v1/search/subservices', {
-			method: 'POST',
-			headers: {
-				Accept: 'application/hal+json',
-				Authorization: 'Bearer ' + localStorage.accessToken,
-				'Content-Type': 'application/json'
-			},
+		let subservices = await fetchData({
+			url: 'api/v1/search/subservices',
 			body: JSON.stringify({
 				'search': {
 					'search': [{
@@ -88,21 +83,15 @@
 				'prj': 'servicesList'
 			})
 		});
-		if (response.ok) {
-			let subservices = await response.json();
-			subservices = subservices.content
-			subservices.forEach(subservice => {
-				let service = {
-					id: subservice._id,
-					sid: subservice.serviceId.split('_')[3],
-					name: subservice.serviceName
-				}
-				window.serviceList.push(service);
-			});
-
-		} else {
-			console.warn('Ошибка HTTP: ' + response.status);
-		}
+		subservices = subservices.content
+		subservices.forEach(subservice => {
+			let service = {
+				id: subservice._id,
+				sid: subservice.serviceId.split('_')[3],
+				name: subservice.serviceName
+			}
+			ES.serviceList.push(service);
+		});
 	}
 
 	function getFilteredList(string) {
@@ -251,7 +240,7 @@
 			ES.lastPersonSearchString = '';
 		}
 		if (search && recentClientList && search.value && ES.recentClients.length > 0) {
-			let filteredClients = ES.recentClients.filter(client => client.lastName.toLowerCase().indexOf(search.value.toLowerCase()) !== -1);
+			let filteredClients = [...ES.recentClients.filter(client => client.lastName.toLowerCase().indexOf(search.value.toLowerCase()) === 0), ...ES.recentClients.filter(client => client.lastName.toLowerCase().indexOf(search.value.toLowerCase()) > 0)];
 			updatePersonsList(filteredClients, recentClientList);
 		}
 		if (search && personsList && search.value) {
@@ -287,12 +276,8 @@
 			}
 			if (searchParams.length > 0 && ES.lastPersonSearchString !== searchString) {
 				ES.lastPersonSearchString = searchString;
-				let response = await fetch('http://172.153.153.48/api/v1/search/persons', {
-					method: 'POST',
-					headers: {
-						Authorization: 'Bearer ' + localStorage.accessToken,
-						'Content-Type': 'application/json'
-					},
+				ES.persons = await fetchData({
+					url: 'api/v1/search/persons',
 					body: JSON.stringify({
 						'search': {
 							'search': searchParams
@@ -300,13 +285,8 @@
 						'sort': 'dateLastModification,DESC',
 					})
 				});
-				if (response.ok) {
-					ES.persons = await response.json();
-					ES.persons = ES.persons.content;
-					updatePersonsList(ES.persons, document.querySelector('.__es__persons-list'));
-				} else {
-					console.warn('Ошибка HTTP: ' + response.status);
-				}
+				ES.persons = ES.persons.content;
+				updatePersonsList(ES.persons, document.querySelector('.__es__persons-list'));
 			}
 		}
 		else if (ES.persons) {
@@ -334,9 +314,9 @@
 				let personElement = (
 					<li key={id} className='__es__persons-list__person-element __es__person'>
 						<button type='button' className='__es__person__trigger' onClick={handlePersonClick}>
-							<span className='__es__person__name'>{ `${person.lastName} ${person.firstName}${person.middleName ? ' ' + person.middleName : ''}` }</span>,
-							<span>{ ` ${person.birthday ? person.birthday.formatted : ''}` }</span>
-							<div>{ person.documentType ? `${person.documentType[0].text} ${person.documentSeries} ${person.documentNumber}` : '' }</div>
+							<span className='__es__person__name'>{`${person.lastName} ${person.firstName}${person.middleName ? ' ' + person.middleName : ''}`}</span>,
+							<span>{` ${person.birthday ? person.birthday.formatted : ''}`}</span>
+							<div>{person.documentType ? `${person.documentType[0].text} ${person.documentSeries} ${person.documentNumber}` : ''}</div>
 						</button>
 					</li>
 				);
@@ -390,12 +370,8 @@
 	}
 
 	async function fetchRecentAppeals() {
-		let response = await fetch('http://172.153.153.48/api/v1/search/appeals', {
-			method: 'POST',
-			headers: {
-				Authorization: 'Bearer ' + localStorage.accessToken,
-				'Content-Type': 'application/json'
-			},
+		let appeals = await fetchData({
+			url: 'api/v1/search/appeals',
 			body: JSON.stringify({
 				"search": {
 					"search": [{
@@ -412,18 +388,66 @@
 				"sort": "dateLastModification,DESC"
 			})
 		});
-		if (response.ok) {
-			let appeals = await response.json();
-			appeals.content.forEach(appeal => {
-				appeal.objects.forEach(object => {
-					if (object.data && object.data.person && !ES.recentClients.some(client => client.reestrId === object.data.person.reestrId)) {
-						ES.recentClients.push(object.data.person);
-					}
-				});
+		appeals.content.forEach(appeal => {
+			appeal.objects.forEach(object => {
+				if (object.data && object.data.person && !ES.recentClients.some(client => client.reestrId === object.data.person.reestrId)) {
+					ES.recentClients.push(object.data.person);
+				}
 			});
-		} else {
-			console.warn("Ошибка HTTP: " + response.status);
-		}
+		});
+	}
+
+	async function fetchData(options) {
+		console.log(options);
+		return new Promise((resolve, reject) => {
+			let baseUrl = 'http://172.153.153.48/';
+			let url = baseUrl + options.url;
+			let body = { body: options.body } || {};
+			fetch(url, options.selfContained || {
+				method: options.method || 'POST',
+				headers: options.headers || {
+					Accept: 'application/hal+json',
+					Authorization: 'Bearer ' + localStorage.accessToken,
+					'Content-Type': 'application/json'
+				},
+				...body
+			}).then(response => response.json()).then(result => {
+					if (result.errorMessage === 'KPP:Token expire') {
+						refreshCredentials().then(() => {
+							fetchData(options).then(data => resolve(data));
+						});
+					}
+					else if (result.errorMessage) {
+						reject(new Error(result.errorMessage));
+					}
+					else {
+						console.log(result);
+						resolve(result)
+					}
+				}), error => {
+				reject(new Error(error));
+			}
+		})
+	}
+
+	function refreshCredentials() {
+		return new Promise((resolve, reject) => {
+			fetchData({
+				url: 'refresh' + '?refreshToken=' + localStorage.refreshToken,
+				headers: {
+					'Accept': 'application/hal+json',
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+				}
+			}).then(result => {
+				if (result && result.accessToken && result.refreshToken) {
+					localStorage.setItem('accessToken', result.accessToken);
+					localStorage.setItem('refreshToken', result.refreshToken);
+					resolve();
+				}
+			}), error => {
+				reject(new Error(error));
+			};
+		});
 	}
 
 	let initInterval = setInterval(checkLoadState, 100);
