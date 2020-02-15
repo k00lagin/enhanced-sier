@@ -96,7 +96,7 @@
 
 	function getFilteredList(string) {
 		let words = string.split(' ');
-		let filteredList = serviceList.filter(service => {
+		let filteredList = ES.serviceList.filter(service => {
 			return words.every(word => {
 				if (ES.aliases[service.sid] && ES.aliases[service.sid].indexOf(word) !== -1) {
 					return true;
@@ -157,7 +157,7 @@
 		let filteredList = [];
 		let serviceListNode = document.querySelector('.service-list-node');
 		if (document.querySelector('.service-search-input').value === '') {
-			filteredList = serviceList;
+			filteredList = ES.serviceList;
 		}
 		else {
 			filteredList = getFilteredList(document.querySelector('.service-search-input').value);
