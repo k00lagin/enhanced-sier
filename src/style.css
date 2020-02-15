@@ -99,7 +99,7 @@ body {
 	background-color:	white;
 	z-index: 10;
 	max-height: 1000px;
-	overflow-y: scroll;
+	overflow-y: auto;
 	box-shadow: 5px 0 5px -1px rgba(0,0,0,.2), 0 5px 5px -1px rgba(0,0,0,.2);
 	flex-flow: column nowrap;
 }
