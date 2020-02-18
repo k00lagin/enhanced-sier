@@ -50,7 +50,7 @@
 				}
 			}
 			children.forEach(child => {
-				element.appendChild(
+				element.append(
 					child.nodeType == null ?
 						document.createTextNode(child.toString()) : child);
 			});
@@ -118,7 +118,7 @@
 				onClick={handleSearchTriggerClick}></button>
 		)
 		let navigationContainer = document.querySelector('.navigation.navigation-main');
-		navigationContainer.appendChild(serviceSearchTrigger);
+		navigationContainer.append(serviceSearchTrigger);
 	}
 
 	function checkSearchTrigger() {
@@ -150,7 +150,7 @@
 				<ul className='service-list-node'></ul>
 			</dialog>
 		)
-		document.body.appendChild(dialog);
+		document.body.append(dialog);
 	}
 
 	function updateServiceList() {
@@ -173,7 +173,7 @@
 					</a>
 				</li>
 			);
-			serviceListNode.appendChild(listItem);
+			serviceListNode.append(listItem);
 		})
 	}
 
@@ -223,7 +223,7 @@
 		if (search) {
 			search.addEventListener('input', handlePersonSearch);
 			search.addEventListener('focus', handleSearchFocus);
-			search.parentNode.appendChild(
+			search.after(
 				<div className='__es__search-flyout'>
 					<ul className='__es__recent-clients-list'></ul>
 					<ul className='__es__persons-list'></ul>
@@ -320,7 +320,7 @@
 						</button>
 					</li>
 				);
-				listNode.appendChild(personElement);
+				listNode.append(personElement);
 			})
 		}
 	}
