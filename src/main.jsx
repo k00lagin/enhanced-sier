@@ -7,6 +7,7 @@
 // @author       /* @echo author */
 // @match        http://172.153.153.48/*
 // @grant        GM_addStyle
+// @grant        GM_setClipboard
 // ==/UserScript==
 
 
@@ -328,9 +329,36 @@
 	function handlePersonClick(e) {
 		let person = ES.recentClients.filter(person => person.reestrId === e.currentTarget.parentNode.getAttribute('key'))[0];
 		if (!person) {
-			person = ES.persons.filter(person => person._id === e.currentTarget.parentNode.getAttribute('key'))[0].data.person;
+			person = ES.persons.filter(person => person._id === e.currentTarget.parentNode.getAttribute('key'))[0];
+			let id = person._id;
+			person = person.data.person;
+			person.reestrId = id;
 		}
-		fillPersonData(person);
+		//fillPersonData(person);
+		copyPersonData(JSON.stringify({
+			type: 'object',
+			data: {
+				person: person
+			}
+		}));
+	}
+
+	function copyPersonData(person) {
+		GM_setClipboard(person);
+		let search = document.querySelector('input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]');
+		search.focus();
+		let tooltip = (
+			<div style="
+					position: absolute;
+					bottom: 34px;
+					left: 50px;
+					background-color: #b6d5f3;
+					padding: 2px 4px;
+					border-radius: 4px;
+					border: 0.5px dashed #504741;
+			">Теперь нажмите Ctrl+V</div>
+		)
+		search.after(tooltip);
 	}
 
 	function fillPersonData(person) {
