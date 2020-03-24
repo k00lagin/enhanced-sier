@@ -134,6 +134,7 @@
 		clearInterval(initInterval);
 		ES.fixSearchTriggerInterval = setInterval(checkSearchTrigger, 500);
 		ES.checkPersonsSearchInterval = setInterval(checkPersonsList, 1000);
+		ES.checkClientsInterval = setInterval(checkClients, 500);
 		createServiceSearchDialog()
 		document.body.addEventListener('keyup', handleESKeyup);
 		GM_addStyle(`/* @echo style */`);
@@ -479,4 +480,35 @@
 	}
 
 	let initInterval = setInterval(checkLoadState, 100);
+
+	async function checkClients() {
+		if (window.location.href.indexOf('http://172.153.153.48/ais/appeals/edit') === 0 && document.querySelector('.sidebar-category.active') && document.querySelector('.sidebar-category.active').textContent === ' Участники ' && !document.querySelectorAll('appeal-object-card .enhanced')[0]) {
+			let appeal = await fetchData({
+				url:`api/v1/find/appeals?mainId=${window.location.href.split('/').pop()}`,
+				method: 'GET'
+			});
+			let objects = appeal.objects;
+			let objectNodes = document.querySelectorAll('appeal-object-card');
+			let panelNodes = document.querySelectorAll('appeal-object-card .heading-elements');
+
+			objects.forEach((obj, key) => {
+				let deleteButton = (
+					<button className='btn btn-danger heading-btn btn-labeled btn-labeled-right btn-xs enhanced' value={obj.guid} disabled><b><i className='icon-trash'></i></b> Удалить </button>
+				);
+				deleteButton.addEventListener('click', handleDeleteObjectClick);
+				panelNodes[key].append(deleteButton);
+			});
+
+		}
+	}
+
+	function handleDeleteObjectClick(e) {
+		let guid = e.currentTarget.value;
+		console.log(guid);
+		let res = fetchData({
+			url: `api/v1/delete/appeals/objects?mainId=${window.location.href.split('/').pop()}&guid=${guid}&parentEntries=appeals.objects`,
+			method: 'DELETE'
+		});
+	}
+
 })();
