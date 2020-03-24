@@ -7,6 +7,7 @@
 // @author       /* @echo author */
 // @match        http://172.153.153.48/*
 // @grant        GM_addStyle
+// @grant        GM_setClipboard
 // ==/UserScript==
 
 
@@ -18,7 +19,11 @@
 			719747: 'прописка',
 			723392: 'права',
 			727489: 'снилс',
-		}
+		},
+		serviceList: [],
+		persons: [],
+		recentClients: [],
+		lastPersonSearchString: ''
 	};
 
 	const React = {
@@ -46,7 +51,7 @@
 				}
 			}
 			children.forEach(child => {
-				element.appendChild(
+				element.append(
 					child.nodeType == null ?
 						document.createTextNode(child.toString()) : child);
 			});
@@ -64,14 +69,8 @@
 	}
 
 	async function getServiceList() {
-		window.serviceList = [];
-		let response = await fetch('http://172.153.153.48/api/v1/search/subservices', {
-			method: 'POST',
-			headers: {
-				Accept: 'application/hal+json',
-				Authorization: 'Bearer ' + localStorage.accessToken,
-				'Content-Type': 'application/json'
-			},
+		let subservices = await fetchData({
+			url: 'api/v1/search/subservices',
 			body: JSON.stringify({
 				'search': {
 					'search': [{
@@ -85,26 +84,20 @@
 				'prj': 'servicesList'
 			})
 		});
-		if (response.ok) {
-			let subservices = await response.json();
-			subservices = subservices.content
-			subservices.forEach(subservice => {
-				let service = {
-					id: subservice._id,
-					sid: subservice.serviceId.split('_')[3],
-					name: subservice.serviceName
-				}
-				window.serviceList.push(service);
-			});
-
-		} else {
-			console.warn('Ошибка HTTP: ' + response.status);
-		}
+		subservices = subservices.content
+		subservices.forEach(subservice => {
+			let service = {
+				id: subservice._id,
+				sid: subservice.serviceId.split('_')[3],
+				name: subservice.serviceName
+			}
+			ES.serviceList.push(service);
+		});
 	}
 
 	function getFilteredList(string) {
 		let words = string.split(' ');
-		let filteredList = serviceList.filter(service => {
+		let filteredList = ES.serviceList.filter(service => {
 			return words.every(word => {
 				if (ES.aliases[service.sid] && ES.aliases[service.sid].indexOf(word) !== -1) {
 					return true;
@@ -122,11 +115,11 @@
 
 	function plantServiceSearchTrigger() {
 		let serviceSearchTrigger = (
-			<button className="service-search-trigger icon-magic-wand"
-			onClick={handleSearchTriggerClick}></button>
+			<button className='service-search-trigger icon-magic-wand'
+				onClick={handleSearchTriggerClick}></button>
 		)
 		let navigationContainer = document.querySelector('.navigation.navigation-main');
-		navigationContainer.appendChild(serviceSearchTrigger);
+		navigationContainer.append(serviceSearchTrigger);
 	}
 
 	function checkSearchTrigger() {
@@ -140,6 +133,7 @@
 		plantServiceSearchTrigger();
 		clearInterval(initInterval);
 		ES.fixSearchTriggerInterval = setInterval(checkSearchTrigger, 500);
+		ES.checkPersonsSearchInterval = setInterval(checkPersonsList, 1000);
 		createServiceSearchDialog()
 		document.body.addEventListener('keyup', handleESKeyup);
 		GM_addStyle(`/* @echo style */`);
@@ -147,24 +141,24 @@
 
 	function createServiceSearchDialog() {
 		let dialog = (
-			<dialog className="service-search-dialog hidden">
-				<header className="dialog-header">
-					<span className="dialog-title">Начало нового дела</span>
-					<button className="dialog__close-trigger icon-cross" onClick={closeServiceSearchDialog}></button>
+			<dialog className='service-search-dialog hidden'>
+				<header className='dialog-header'>
+					<span className='dialog-title'>Начало нового дела</span>
+					<button className='dialog__close-trigger icon-cross' onClick={closeServiceSearchDialog}></button>
 				</header>
-				<input className="service-search-input form-control" type="text"
-				onKeyUp={handleSearchKeyup} placeholder="Часть названия услуги, её код, или псевдоним..."></input>
-				<ul className="service-list-node"></ul>
+				<input className='service-search-input form-control' type='text'
+					onKeyUp={handleSearchKeyup} placeholder='Часть названия услуги, её код, или псевдоним...'></input>
+				<ul className='service-list-node'></ul>
 			</dialog>
 		)
-		document.body.appendChild(dialog);
+		document.body.append(dialog);
 	}
 
 	function updateServiceList() {
 		let filteredList = [];
 		let serviceListNode = document.querySelector('.service-list-node');
 		if (document.querySelector('.service-search-input').value === '') {
-			filteredList = serviceList;
+			filteredList = ES.serviceList;
 		}
 		else {
 			filteredList = getFilteredList(document.querySelector('.service-search-input').value);
@@ -172,15 +166,15 @@
 		serviceListNode.innerHTML = '';
 		filteredList.forEach(service => {
 			let listItem = (
-				<li className="service-item">
-					<span className="service-code">{service.sid} </span>
-					<a className="service-link" tabindex="0"
-					href={ 'http://172.153.153.48/ais/appeals/create/' + service.id }>
+				<li className='service-item'>
+					<span className='service-code'>{service.sid} </span>
+					<a className='service-link' tabindex='0'
+						href={'http://172.153.153.48/ais/appeals/create/' + service.id}>
 						{service.name}
 					</a>
 				</li>
 			);
-			serviceListNode.appendChild(listItem);
+			serviceListNode.append(listItem);
 		})
 	}
 
@@ -216,6 +210,272 @@
 		if (e.key === 'Escape' && document.querySelector('.service-search-dialog:not(.hidden)')) {
 			closeServiceSearchDialog();
 		}
+	}
+
+	function checkPersonsList() {
+		if (document.querySelector('input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]') && !document.querySelector('.__es__search-flyout')) {
+			preparePersonsList();
+		}
+	}
+
+	function preparePersonsList() {
+		let search = document.querySelector('input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]');
+		fetchRecentAppeals()
+		if (search) {
+			search.addEventListener('input', handlePersonSearch);
+			search.addEventListener('focus', handleSearchFocus);
+			search.after(
+				<div className='__es__search-flyout'>
+					<ul className='__es__recent-clients-list'></ul>
+					<ul className='__es__persons-list'></ul>
+				</div>
+			);
+		}
+	}
+
+	async function handlePersonSearch() {
+		let search = document.querySelector('input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]');
+		let personsList = document.querySelector('.__es__persons-list');
+		let recentClientList = document.querySelector('.__es__recent-clients-list');
+		if (search.value === '') {
+			ES.lastPersonSearchString = '';
+		}
+		if (search && recentClientList && search.value && ES.recentClients.length > 0) {
+			let filteredClients = [...ES.recentClients.filter(client => client.lastName.toLowerCase().indexOf(search.value.toLowerCase()) === 0), ...ES.recentClients.filter(client => client.lastName.toLowerCase().indexOf(search.value.toLowerCase()) > 0)];
+			updatePersonsList(filteredClients, recentClientList);
+		}
+		if (search && personsList && search.value) {
+			let searchComponents = search.value.split(' ');
+			var searchParams = [];
+			var searchString = '';
+			if (searchComponents.length > 1) {
+				let lastName = searchComponents[0];
+				searchParams.push({
+					'field': 'data.person.lastName',
+					'operator': 'eq',
+					'value': lastName[0].toUpperCase() + lastName.substr(1)
+				});
+				searchString += lastName[0].toUpperCase() + lastName.substr(1);
+				if (searchComponents.length > 2) {
+					var firstName = searchComponents[1];
+					searchParams.push({
+						'field': 'data.person.firstName',
+						'operator': 'eq',
+						'value': firstName[0].toUpperCase() + firstName.substr(1)
+					});
+					searchString += firstName[0].toUpperCase() + firstName.substr(1);
+					if (searchComponents.length > 3) {
+						var middleName = searchComponents[2];
+						searchParams.push({
+							'field': 'data.person.middleName',
+							'operator': 'eq',
+							'value': middleName[0].toUpperCase() + middleName.substr(1)
+						});
+						searchString += middleName[0].toUpperCase() + middleName.substr(1);
+					}
+				}
+			}
+			if (searchParams.length > 0 && ES.lastPersonSearchString !== searchString) {
+				ES.lastPersonSearchString = searchString;
+				ES.persons = await fetchData({
+					url: 'api/v1/search/persons',
+					body: JSON.stringify({
+						'search': {
+							'search': searchParams
+						},
+						'sort': 'dateLastModification,DESC',
+					})
+				});
+				ES.persons = ES.persons.content;
+				updatePersonsList(ES.persons, document.querySelector('.__es__persons-list'));
+			}
+		}
+		else if (ES.persons) {
+			ES.persons = [];
+			updatePersonsList(ES.persons, document.querySelector('.__es__persons-list'));
+			updatePersonsList([], document.querySelector('.__es__recent-clients-list'));
+		}
+	}
+
+	function handleSearchFocus() {
+		let search = document.querySelector('input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]');
+		if (search.value === '') {
+			ES.lastPersonSearchString = '';
+		}
+	}
+
+	function updatePersonsList(persons, listNode) {
+		if (persons && listNode) {
+			listNode.innerHTML = '';
+			persons.forEach(person => {
+				let id = person._id || person.reestrId;
+				if (person.data) {
+					person = person.data.person;
+				}
+				let personElement = (
+					<li key={id} className='__es__persons-list__person-element __es__person'>
+						<button type='button' className='__es__person__trigger' onClick={handlePersonClick}>
+							<span className='__es__person__name'>{`${person.lastName} ${person.firstName}${person.middleName ? ' ' + person.middleName : ''}`}</span>,
+							<span>{` ${person.birthday ? person.birthday.formatted : ''}`}</span>
+							<div>{person.documentType ? `${person.documentType[0].text} ${person.documentSeries} ${person.documentNumber}` : ''}</div>
+						</button>
+					</li>
+				);
+				listNode.append(personElement);
+			})
+		}
+	}
+
+	function handlePersonClick(e) {
+		let person = ES.recentClients.filter(person => person.reestrId === e.currentTarget.parentNode.getAttribute('key'))[0];
+		if (!person) {
+			person = ES.persons.filter(person => person._id === e.currentTarget.parentNode.getAttribute('key'))[0];
+			let id = person._id;
+			person = person.data.person;
+			person.reestrId = id;
+		}
+		//fillPersonData(person);
+		copyPersonData(JSON.stringify({
+			type: 'object',
+			data: {
+				person: person
+			}
+		}));
+	}
+
+	function copyPersonData(person) {
+		GM_setClipboard(person);
+		let search = document.querySelector('input[placeholder="Поиск по ФИО, СНИЛС или номеру мобильного телефона в реестре клиентов..."]');
+		search.focus();
+		let tooltip = (
+			<div style="
+					position: absolute;
+					bottom: 34px;
+					left: 50px;
+					background-color: #b6d5f3;
+					padding: 2px 4px;
+					border-radius: 4px;
+					border: 0.5px dashed #504741;
+			">Теперь нажмите Ctrl+V</div>
+		)
+		search.after(tooltip);
+	}
+
+	function fillPersonData(person) {
+		let fioInput = document.querySelector('input[name=fio]')
+		fioInput.value = `${person.lastName} ${person.firstName}${person.middleName ? ' ' + person.middleName : ''}`;
+		fioInput.dispatchEvent(new Event('input'));
+		optionalRenderValue(person.birthday.formatted, 'date-picker[name=birthday] input[name=mydate]');
+		optionalRenderValue(person.birthday.formatted, 'date-picker[name=birthday] input[name=mydate] + input');
+
+		optionalRenderValue(person.citizenship.name, 'individual-object-document catalogue[name=citizenship] input')
+		optionalRenderValue(person.documentSeries, 'individual-object-document input[name=documentSeries]');
+		optionalRenderValue(person.documentNumber, 'individual-object-document input[name=documentNumber]');
+		optionalRenderValue(person.documentIssueDate.formatted, 'individual-object-document date-picker[name=documentIssueDate] input[name=mydate]');
+		optionalRenderValue(person.documentIssueDate.formatted, 'individual-object-document date-picker[name=documentIssueDate] input[name=mydate] + input');
+
+		if (!optionalRenderValue(person.documentIssuer.name, 'individual-object-document catalogue[name=documentIssuer] input[type=text]')) {
+			optionalRenderValue(person.documentIssuer.code, 'individual-object-document input[name=documentIssuerCode]');
+			optionalRenderValue(person.documentIssuer.name, 'individual-object-document  input[name=documentIssuerName]');
+		}
+
+		optionalRenderValue(person.birthPlace.unrecognizablePart, 'individual-object-document fias input[type=text]:not([placeholder])')
+
+		optionalRenderValue(person.snils, 'input[name=snils]');
+		optionalRenderValue(person.mobile, 'input[name=mobile]')
+	}
+
+	function optionalRenderValue(value, targetQuery) {
+		if (value) {
+			let targetElement = document.querySelector(targetQuery);
+			if (targetElement) {
+				targetElement.value = value;
+				targetElement.dispatchEvent(new Event('input'));
+				return true;
+			}
+		}
+		return false;
+	}
+
+	async function fetchRecentAppeals() {
+		let appeals = await fetchData({
+			url: 'api/v1/search/appeals',
+			body: JSON.stringify({
+				"search": {
+					"search": [{
+						"field": "unit.id",
+						"operator": "eq",
+						"value": JSON.parse(localStorage.currentOrganization)._id
+					},
+					{
+						"field": "userCreation.login",
+						"operator": "eq",
+						"value": JSON.parse(localStorage.user).login
+					}]
+				},
+				"sort": "dateLastModification,DESC"
+			})
+		});
+		appeals.content.forEach(appeal => {
+			appeal.objects.forEach(object => {
+				if (object.data && object.data.person && !ES.recentClients.some(client => client.reestrId === object.data.person.reestrId)) {
+					ES.recentClients.push(object.data.person);
+				}
+			});
+		});
+	}
+
+	async function fetchData(options) {
+		console.log(options);
+		return new Promise((resolve, reject) => {
+			let baseUrl = 'http://172.153.153.48/';
+			let url = baseUrl + options.url;
+			let body = { body: options.body } || {};
+			fetch(url, options.selfContained || {
+				method: options.method || 'POST',
+				headers: options.headers || {
+					Accept: 'application/hal+json',
+					Authorization: 'Bearer ' + localStorage.accessToken,
+					'Content-Type': 'application/json'
+				},
+				...body
+			}).then(response => response.json()).then(result => {
+					if (result.errorMessage === 'KPP:Token expire') {
+						refreshCredentials().then(() => {
+							fetchData(options).then(data => resolve(data));
+						});
+					}
+					else if (result.errorMessage) {
+						reject(new Error(result.errorMessage));
+					}
+					else {
+						console.log(result);
+						resolve(result)
+					}
+				}), error => {
+				reject(new Error(error));
+			}
+		})
+	}
+
+	function refreshCredentials() {
+		return new Promise((resolve, reject) => {
+			fetchData({
+				url: 'refresh' + '?refreshToken=' + localStorage.refreshToken,
+				headers: {
+					'Accept': 'application/hal+json',
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+				}
+			}).then(result => {
+				if (result && result.accessToken && result.refreshToken) {
+					localStorage.setItem('accessToken', result.accessToken);
+					localStorage.setItem('refreshToken', result.refreshToken);
+					resolve();
+				}
+			}), error => {
+				reject(new Error(error));
+			};
+		});
 	}
 
 	let initInterval = setInterval(checkLoadState, 100);
