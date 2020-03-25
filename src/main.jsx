@@ -424,7 +424,8 @@
 		});
 		appeals.content.forEach(appeal => {
 			appeal.objects.forEach(object => {
-				if (object.data && object.data.person && !ES.recentClients.some(client => client.reestrId === object.data.person.reestrId)) {
+				if (object.data && object.data.person && object.data.person.reestrId && !ES.recentClients.some(client => client.reestrId === object.data.person.reestrId)) {
+					// TODO: подгружать данные отдельно, даже если нет reestrId
 					ES.recentClients.push(object.data.person);
 				}
 			});
