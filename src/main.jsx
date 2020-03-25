@@ -225,6 +225,7 @@
 		if (search) {
 			search.addEventListener('input', handlePersonSearch);
 			search.addEventListener('focus', handleSearchFocus);
+			search.setAttribute('autocomplete', 'new-password');
 			search.after(
 				<div className='__es__search-flyout'>
 					<ul className='__es__recent-clients-list'></ul>
