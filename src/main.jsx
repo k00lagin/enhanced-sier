@@ -433,7 +433,6 @@
 	}
 
 	async function fetchData(options) {
-		// console.log(options);
 		return new Promise((resolve, reject) => {
 			let baseUrl = 'http://172.153.153.48/';
 			let url = baseUrl + options.url;
@@ -456,7 +455,6 @@
 						reject(new Error(result.errorMessage));
 					}
 					else {
-						console.log(result);
 						resolve(result)
 					}
 				}), error => {
@@ -533,7 +531,6 @@
 
 	function handleDeleteObjectClick(e) {
 		let guid = e.currentTarget.value;
-		console.log(guid);
 		let res = fetchData({
 			url: `api/v1/delete/appeals/objects?mainId=${window.location.href.split('/').pop()}&guid=${guid}&parentEntries=appeals.objects`,
 			method: 'DELETE'
