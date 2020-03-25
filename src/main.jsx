@@ -8,6 +8,7 @@
 // @match        http://172.153.153.48/*
 // @grant        GM_addStyle
 // @grant        GM_setClipboard
+// @grant        GM_notification
 // ==/UserScript==
 
 
@@ -15,6 +16,9 @@
 	'use strict';
 
 	let ES = {
+		notifyWindows: {
+			117801: true
+		},
 		aliases: {
 			719747: 'прописка',
 			723392: 'права',
@@ -428,7 +432,7 @@
 	}
 
 	async function fetchData(options) {
-		console.log(options);
+		// console.log(options);
 		return new Promise((resolve, reject) => {
 			let baseUrl = 'http://172.153.153.48/';
 			let url = baseUrl + options.url;
@@ -478,6 +482,29 @@
 				reject(new Error(error));
 			};
 		});
+	}
+
+	function findTalons() {
+		fetch(`http://eq-tmr-pult.mfc-74.ru:8080/api/v1/search/talons/findByWindowIdForCall?windowId=${localStorage.pult_windowId}`, {
+			method: 'GET',
+			headers: {
+				Accept: 'application/hal+json',
+				'Accept-Encoding': 'gzip, deflate',
+				AccessToken: localStorage.pult_accessToken,
+				'Content-Type': 'application/json'
+			}
+		}).then(response => response.json()).then(result => {
+			if (result._embedded) {
+				GM_notification({
+					title: 'Пульт электронной очереди',
+					text: 'Заявитель ожидает выдачи документов'
+				});
+			}
+		});
+	}
+	if (notifyWindows[localStorage.pult_windowId] === true) {
+		findTalons();
+		let talonInterval = setInterval(findTalons, 150000);
 	}
 
 	let initInterval = setInterval(checkLoadState, 100);
