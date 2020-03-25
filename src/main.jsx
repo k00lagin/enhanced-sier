@@ -502,7 +502,7 @@
 			}
 		});
 	}
-	if (notifyWindows[localStorage.pult_windowId] === true) {
+	if (ES.notifyWindows[localStorage.pult_windowId] === true) {
 		findTalons();
 		let talonInterval = setInterval(findTalons, 150000);
 	}
