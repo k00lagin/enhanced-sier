@@ -4,20 +4,22 @@ body {
 	--es-2gap: calc(var(--es-gap) * 2);
 }
 
-.navigation.navigation-main {
-	display: flex;
-	flex-flow: column nowrap;
-}
-
 .service-search-trigger {
-	order: -1;
-	height: 40px;
-	background-color: inherit;
+	background-color: rgba(38, 50, 56, .2);
 	border: 0;
+	position: absolute;
+	top: 130px;
+	z-index: 100;
+	color: white;
+	height: 32px;
+	width: 32px;
 }
 
 .service-search-trigger:hover {
-	background-color: rgba(0,0,0,.1);
+	background-color: rgba(38, 50, 56, .1);
+}
+.service-search-trigger:active {
+	color: rgba(255, 255, 255, .7);
 }
 
 .service-search-dialog {
@@ -34,6 +36,15 @@ body {
 	padding-top: var(--es-2gap);
 	border: 1px solid rgba(125, 125, 125, 0.2);
 	box-shadow: 5px 0 5px -1px rgba(0,0,0,.2), 0 5px 5px -1px rgba(0,0,0,.2);
+}
+
+@media (max-width: 1200px) {
+	.service-search-trigger {
+		top: 120px;
+	}
+	.service-search-dialog {
+		left: 70px;
+	}
 }
 
 .dialog-header {

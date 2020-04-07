@@ -122,12 +122,11 @@
 			<button className='service-search-trigger icon-magic-wand'
 				onClick={handleSearchTriggerClick}></button>
 		)
-		let navigationContainer = document.querySelector('.navigation.navigation-main');
-		navigationContainer.append(serviceSearchTrigger);
+		document.body.append(serviceSearchTrigger);
 	}
 
 	function checkSearchTrigger() {
-		if (!document.querySelector('.navigation.navigation-main .service-search-trigger')) {
+		if (!document.querySelector('.service-search-trigger')) {
 			plantServiceSearchTrigger();
 		}
 	}
