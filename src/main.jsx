@@ -508,7 +508,11 @@
 	let initInterval = setInterval(checkLoadState, 100);
 
 	async function checkClients() {
-		if (window.location.href.indexOf('http://172.153.153.48/ais/appeals/edit') === 0 && document.querySelector('.sidebar-category.active') && document.querySelector('.sidebar-category.active').textContent === ' Участники ' && !document.querySelectorAll('appeal-object-card .enhanced')[0]) {
+		if (window.location.href.indexOf('http://172.153.153.48/ais/appeals/edit') === 0 &&
+			document.querySelector('.sidebar-category.active') &&
+			document.querySelector('.sidebar-category.active').textContent === ' Участники ' &&
+			document.querySelector('appeal-object-card') &&
+			!document.querySelector('appeal-object-card .enhanced')) {
 			let appeal = await fetchData({
 				url:`api/v1/find/appeals?mainId=${window.location.href.split('/').pop()}`,
 				method: 'GET'
@@ -518,11 +522,16 @@
 			let panelNodes = document.querySelectorAll('appeal-object-card .heading-elements');
 
 			objects.forEach((obj, key) => {
-				let deleteButton = (
-					<button className='btn btn-danger heading-btn btn-labeled btn-labeled-right btn-xs enhanced' value={obj.guid} disabled><b><i className='icon-trash'></i></b> Удалить </button>
-				);
-				deleteButton.addEventListener('click', handleDeleteObjectClick);
-				panelNodes[key].append(deleteButton);
+				if (obj.header === panelNodes[key].parentElement.firstElementChild.firstElementChild.textContent) {
+					let deleteButton = (
+						<button className='btn btn-danger heading-btn btn-labeled btn-labeled-right btn-xs enhanced' value={obj.guid} disabled><b><i className='icon-trash'></i></b> Удалить </button>
+					);
+					deleteButton.addEventListener('click', handleDeleteObjectClick);
+					panelNodes[key].append(deleteButton);
+				}
+				else {
+					console.log(`${obj.header} is not equal to \n ${panelNodes[key].parentElement.firstElementChild.firstElementChild.textContent}`);
+				}
 			});
 
 		}
@@ -530,10 +539,23 @@
 
 	function handleDeleteObjectClick(e) {
 		let guid = e.currentTarget.value;
-		let res = fetchData({
-			url: `api/v1/delete/appeals/objects?mainId=${window.location.href.split('/').pop()}&guid=${guid}&parentEntries=appeals.objects`,
-			method: 'DELETE'
+		let url = `api/v1/delete/appeals/objects?mainId=${window.location.href.split('/').pop()}&guid=${guid}&parentEntries=appeals.objects`;
+		fetch(url, {
+			method: 'DELETE',
+			headers: {
+				Accept: 'application/hal+json',
+				Authorization: 'Bearer ' + localStorage.accessToken,
+				'Content-Type': 'application/json'
+			}
+		}).then(response => {
+			if (response.status === 204) {
+				window.location.href = window.location.href;
+			}
+			else {
+				console.warn(`Ошибка при удалении участника. Ответ сервера: ${response.status}`);
+			}
 		});
+
 	}
 
 })();
